@@ -11,16 +11,16 @@
 ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Local%20Stack-2496ed)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088ff)
 
-Spring Boot tabanli bir e-commerce demo uygulamasi. Proje; MySQL, Kafka, RabbitMQ, MailHog, Prometheus ve Grafana ile birlikte calisiyor ve hem uygulama hem broker metriklerini izlemeyi hedefliyor.
+This is a Spring Boot based e-commerce demo application. The project runs with MySQL, Kafka, RabbitMQ, MailHog, Prometheus, and Grafana, and focuses on monitoring both application and broker metrics.
 
-## Icerik
+## Contents
 
-- `kafka/`: Spring Boot uygulamasi
-- `compose.yaml`: lokal servisleri kaldiran Docker Compose dosyasi
-- `monitoring/`: Prometheus ve Grafana provisioning/dashboards
-- `.github/workflows/`: CI ve zamanlanmis workflow tanimlari
+- `kafka/`: Spring Boot application
+- `compose.yaml`: Docker Compose file for local services
+- `monitoring/`: Prometheus and Grafana provisioning/dashboard files
+- `.github/workflows/`: CI and scheduled workflow definitions
 
-## Kullanilan Teknolojiler
+## Tech Stack
 
 - Java 21 target, Maven build
 - Spring Boot 4
@@ -31,35 +31,35 @@ Spring Boot tabanli bir e-commerce demo uygulamasi. Proje; MySQL, Kafka, RabbitM
 - Micrometer + Prometheus + Grafana
 - Testcontainers + JUnit 5 + Mockito
 
-## Ozellikler
+## Features
 
-- Urun ve kategori listeleme
-- Sepet ve checkout akisi
-- Siparis olusturma ve iptal etme
-- Admin tarafinda kategori ve urun yonetimi
-- Kafka topic ve RabbitMQ mail queue monitoring ekranlari
-- Prometheus ve Grafana ile observability
+- Product and category listing
+- Cart and checkout flow
+- Order creation and cancellation
+- Admin-side category and product management
+- Kafka topic and RabbitMQ mail queue monitoring screens
+- Observability with Prometheus and Grafana
 
-## Gereksinimler
+## Requirements
 
-- JDK 25 veya JDK 21
+- JDK 25 or JDK 21
 - Docker + Docker Compose
 
-Not:
-- Maven derleme hedefi `release 21`.
-- JDK 25 ile calistirmak destekleniyor; Lombok kaynakli gecis uyarilari gorulebilir.
+Notes:
+- Maven compiles with target `release 21`.
+- Running with JDK 25 is supported, but you may still see Lombok-related transition warnings.
 
-## Hizli Baslangic
+## Quick Start
 
-### 1. Altyapiyi kaldir
+### 1. Start the infrastructure
 
-Repo kokunden:
+From the repository root:
 
 ```bash
 docker compose up -d
 ```
 
-Bu servisler acilir:
+This starts:
 
 - MySQL
 - Kafka broker
@@ -69,47 +69,47 @@ Bu servisler acilir:
 - MailHog
 - RabbitMQ
 
-### 2. Uygulamayi calistir
+### 2. Run the application
 
-Repo kokunden:
+From the repository root:
 
 ```bash
 ./kafka/mvnw -f kafka/pom.xml spring-boot:run
 ```
 
-Alternatif olarak modul klasorunden:
+Alternatively, from the module directory:
 
 ```bash
 cd kafka
 ./mvnw spring-boot:run
 ```
 
-## Test Calistirma
+## Running Tests
 
-Tum testler:
+Run the full test suite:
 
 ```bash
 ./kafka/mvnw -B -f kafka/pom.xml test
 ```
 
-Belirli bir test sinifi:
+Run a specific test class:
 
 ```bash
 ./kafka/mvnw -B -f kafka/pom.xml -Dtest=AdminCategoryControllerTest test
 ```
 
-## Varsayilan Erisim Noktalari
+## Default Endpoints
 
-- Uygulama: `http://localhost:8080`
+- Application: `http://localhost:8080`
 - Kafka UI: `http://localhost:8090`
 - Prometheus: `http://localhost:9090`
 - Grafana: `http://localhost:3000`
 - MailHog: `http://localhost:8025`
 - RabbitMQ Management: `http://localhost:15672`
 
-## Varsayilan Kimlik Bilgileri
+## Default Credentials
 
-Bu degerler `.env` ve `kafka/.env` icinden gelir:
+These values come from `.env` and `kafka/.env`:
 
 - MySQL
   - database: `kafka`
@@ -127,34 +127,34 @@ Bu degerler `.env` ve `kafka/.env` icinden gelir:
 
 ## Monitoring
 
-Prometheus scrape targetlari:
+Prometheus scrape targets:
 
 - `spring-app`: `wsl-host:8080/actuator/prometheus`
 - `kafka`: `broker:7071/metrics`
 
-Grafana dashboard dosyalari:
+Grafana dashboard files:
 
 - `monitoring/grafana/dashboards/kafka-app-vs-broker.json`
 - `monitoring/grafana/dashboards/kafka-broker-observability.json`
 
-Grafana, dashboard verilerini dogrudan Prometheus datasource uzerinden alir. Datasource provisioning dosyasi:
+Grafana reads dashboard data through the Prometheus datasource. Datasource provisioning file:
 
 - `monitoring/grafana/provisioning/datasources/grafana-prometheus-datasource.yml`
 
-## Onemli Dosyalar
+## Important Files
 
-- Uygulama ayarlari: [`kafka/src/main/resources/application.properties`](/mnt/d/Code/Kafka/pehli_e_commerce/kafka/src/main/resources/application.properties)
+- Application settings: [`kafka/src/main/resources/application.properties`](/mnt/d/Code/Kafka/pehli_e_commerce/kafka/src/main/resources/application.properties)
 - Root compose: [`compose.yaml`](/mnt/d/Code/Kafka/pehli_e_commerce/compose.yaml)
 - Module compose: [`kafka/compose.yaml`](/mnt/d/Code/Kafka/pehli_e_commerce/kafka/compose.yaml)
 - Prometheus config: [`monitoring/prometheus.yml`](/mnt/d/Code/Kafka/pehli_e_commerce/monitoring/prometheus.yml)
 - CI workflow: [`.github/workflows/ci.yml`](/mnt/d/Code/Kafka/pehli_e_commerce/.github/workflows/ci.yml)
-- Aylik update workflow: [`.github/workflows/update.yml`](/mnt/d/Code/Kafka/pehli_e_commerce/.github/workflows/update.yml)
+- Monthly update workflow: [`.github/workflows/update.yml`](/mnt/d/Code/Kafka/pehli_e_commerce/.github/workflows/update.yml)
 
 ## CI
 
-Projede iki workflow var:
+The project currently has two workflows:
 
-- `CI`: push, pull request, manuel calistirma ve her gun `13:00 UTC`
-- `Update`: manuel calistirma ve her ayin 1'i `03:00 UTC`
+- `CI`: push, pull request, manual trigger, and daily at `13:00 UTC`
+- `Update`: manual trigger and monthly on day 1 at `03:00 UTC`
 
-Her iki workflow da JDK 25 ile `./kafka/mvnw -B -f kafka/pom.xml test` komutunu calistirir.
+Both workflows run `./kafka/mvnw -B -f kafka/pom.xml test` with JDK 25.
