@@ -1,0 +1,140 @@
+.app-auth-actions {
+    min-width: 14rem;
+}
+
+.app-profile-toggle {
+    min-width: auto;
+    padding-inline: 1rem;
+}
+
+.app-profile-menu {
+    min-width: 12rem;
+}
+
+.app-page-header {
+    min-height: 12rem;
+}
+
+.app-section-card {
+    min-height: 100%;
+}
+
+.app-product-thumb {
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.app-product-thumb.active,
+.app-product-thumb:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-2px);
+}
+
+.app-product-main-image {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+}
+
+.app-product-thumb-image {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+}
+
+.app-cart-feedback {
+    max-width: min(100vw - 2rem, 24rem);
+}
+
+.app-cart-item-image {
+    width: 6rem;
+    height: 6rem;
+    object-fit: cover;
+}
+
+.app-checkout-stepper {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.app-checkout-step {
+    align-items: center;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    display: flex;
+    gap: 0.875rem;
+    padding: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.app-checkout-step-number {
+    align-items: center;
+    background: var(--bs-gray-200);
+    border-radius: 999px;
+    display: inline-flex;
+    font-weight: 700;
+    height: 2rem;
+    justify-content: center;
+    min-width: 2rem;
+}
+
+.app-checkout-step.is-active {
+    border-color: var(--bs-dark);
+    box-shadow: 0 0 0 0.15rem rgba(33, 37, 41, 0.08);
+    transform: translateY(-1px);
+}
+
+.app-checkout-step.is-complete {
+    border-color: var(--bs-primary);
+}
+
+.app-checkout-step.is-complete .app-checkout-step-number,
+.app-checkout-step.is-active .app-checkout-step-number {
+    background: var(--bs-primary);
+    color: #fff;
+}
+
+.app-payment-option-input {
+    left: -9999px;
+    opacity: 0;
+    position: absolute;
+}
+
+.app-payment-option-card {
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    cursor: pointer;
+    display: block;
+    height: 100%;
+    min-height: 7.5rem;
+    padding: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.app-payment-option-card:hover {
+    border-color: var(--bs-primary);
+    transform: translateY(-1px);
+}
+
+.app-payment-option-input:checked + .app-payment-option-card {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+}
+
+@media (max-width: 991.98px) {
+    .app-auth-actions {
+        min-width: 0;
+        margin-top: 1rem;
+        width: 100%;
+    }
+
+    .app-profile-toggle {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .app-checkout-stepper {
+        grid-template-columns: 1fr;
+    }
+}

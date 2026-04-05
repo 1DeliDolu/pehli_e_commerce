@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <body>
+    <nav
+      th:fragment="navbar"
+      class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="/">Kafka App</a>
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                th:classappend="${currentPath == '/'} ? 'active'"
+                href="/"
+                >Home</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                th:classappend="${currentPath.startsWith('/products')} ? 'active'"
+                href="/products"
+                >Products</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                th:classappend="${currentPath.startsWith('/categories')} ? 'active'"
+                href="/categories"
+                >Categories</a
+              >
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                th:classappend="${currentPath.startsWith('/cart')} ? 'active'"
+                href="/cart"
+                >Cart
+                <span
+                  class="badge text-bg-light ms-1"
+                  data-cart-count-badge
+                  th:classappend="${cartItemCount > 0} ? '' : ' d-none'"
+                  th:text="${cartItemCount}"
+                  >0</span
+                >
+              </a>
+            </li>
+            <li class="nav-item" th:if="${loggedIn}">
+              <a
+                class="nav-link"
+                th:classappend="${currentPath.startsWith('/orders')} ? 'active'"
+                href="/orders"
+                >My Orders</a
+              >
+            </li>
+            <li class="nav-item" th:if="${isAdmin}">
+              <a
+                class="nav-link"
+                th:classappend="${currentPath.startsWith('/admin')} ? 'active'"
+                href="/admin/orders"
+                >Admin</a
+              >
+            </li>
+          </ul>
+
+          <div
+            class="d-flex flex-column flex-lg-row gap-2 app-auth-actions justify-content-lg-end">
+            <a
+              th:if="${!loggedIn}"
+              class="btn btn-outline-light px-4"
+              href="/login"
+              >Login</a
+            >
+            <a
+              th:if="${!loggedIn}"
+              class="btn btn-primary px-4"
+              href="/register"
+              >Register</a
+            >
+
+            <div class="dropdown" th:if="${loggedIn}">
+              <button
+                class="btn btn-outline-light dropdown-toggle text-start app-profile-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false">
+                <span class="fw-semibold" th:text="${username}">username</span>
+              </button>
+              <ul
+                class="dropdown-menu dropdown-menu-end shadow app-profile-menu">
+                <li>
+                  <span
+                    class="dropdown-item-text fw-semibold"
+                    th:text="${username}"
+                    >username</span
+                  >
+                </li>
+                <li>
+                  <span
+                    class="dropdown-item-text small text-secondary"
+                    th:text="${roleDisplayName}"
+                    >User</span
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li><a class="dropdown-item" href="/">Home</a></li>
+                <li><a class="dropdown-item" href="/products">Products</a></li>
+                <li>
+                  <a class="dropdown-item" href="/categories">Categories</a>
+                </li>
+                <li><a class="dropdown-item" href="/cart">Cart</a></li>
+                <li><a class="dropdown-item" href="/orders">My Orders</a></li>
+                <li>
+                  <span
+                    class="dropdown-item-text small text-secondary"
+                    data-cart-count-summary
+                    th:classappend="${cartItemCount > 0} ? '' : ' d-none'"
+                    th:text="${cartItemCount} + ' urun sepetinizde'"
+                    >0 urun sepetinizde</span
+                  >
+                </li>
+                <li th:if="${isAdmin}"><hr class="dropdown-divider" /></li>
+                <li th:if="${isAdmin and !isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/orders">Admin Orders</a>
+                </li>
+                <li th:if="${isAdmin and !isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/products"
+                    >Admin Products</a
+                  >
+                </li>
+                <li th:if="${isAdmin and !isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/categories"
+                    >Admin Categories</a
+                  >
+                </li>
+                <li th:if="${isAdmin and !isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/mail-queue"
+                    >Admin Mail Queue</a
+                  >
+                </li>
+                <li th:if="${isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/orders"
+                    >Super Admin Orders</a
+                  >
+                </li>
+                <li th:if="${isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/products"
+                    >Super Admin Products</a
+                  >
+                </li>
+                <li th:if="${isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/categories"
+                    >Super Admin Categories</a
+                  >
+                </li>
+                <li th:if="${isSuperAdmin}">
+                  <a class="dropdown-item" href="/admin/mail-queue"
+                    >Super Admin Mail Queue</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <form th:action="@{/logout}" method="post" class="px-3 py-1">
+                    <input
+                      type="hidden"
+                      th:name="${_csrf.parameterName}"
+                      th:value="${_csrf.token}" />
+                    <button type="submit" class="btn btn-warning w-100">
+                      Logout
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </body>
+</html>

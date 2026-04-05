@@ -1,0 +1,121 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: kafka-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${APP_DB_NAME:-kafka}
+      MYSQL_USER: ${APP_DB_USERNAME:-musta}
+      MYSQL_PASSWORD: ${APP_DB_PASSWORD:-D0cker57}
+      MYSQL_ROOT_PASSWORD: ${APP_DB_ROOT_PASSWORD:-root}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${APP_DB_ROOT_PASSWORD:-root}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  broker:
+    build:
+      context: ..
+      dockerfile: docker/kafka-jmx/Dockerfile
+    container_name: broker
+    hostname: broker
+    ports:
+      - "9092:9092"
+      - "7071:7071"
+    environment:
+      KAFKA_NODE_ID: ${KAFKA_NODE_ID:-1}
+      KAFKA_PROCESS_ROLES: ${KAFKA_PROCESS_ROLES:-broker,controller}
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS:-1@broker:9093}
+      KAFKA_LISTENERS: ${KAFKA_LISTENERS:-PLAINTEXT_HOST://:9092,PLAINTEXT_DOCKER://:29092,CONTROLLER://:9093}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS:-PLAINTEXT_HOST://localhost:9092,PLAINTEXT_DOCKER://broker:29092}
+      KAFKA_CONTROLLER_LISTENER_NAMES: ${KAFKA_CONTROLLER_LISTENER_NAMES:-CONTROLLER}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME:-PLAINTEXT_DOCKER}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP:-CONTROLLER:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_DOCKER:PLAINTEXT}
+      KAFKA_LOG_DIRS: ${KAFKA_LOG_DIRS:-/var/lib/kafka/data/kraft-combined-logs}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR:-1}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR:-1}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR:-1}
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: ${KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR:-1}
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: ${KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR:-1}
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS:-1}
+      KAFKA_LOG_RETENTION_HOURS: ${KAFKA_LOG_RETENTION_HOURS:-168}
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: ${KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS:-0}
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: 127.0.0.1
+      KAFKA_OPTS: -javaagent:/opt/jmx-exporter/jmx_prometheus_javaagent.jar=7071:/opt/jmx-exporter/kafka-jmx-config.yml
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - broker
+    ports:
+      - "${APP_KAFKA_UI_PORT:-8090}:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: ${APP_KAFKA_UI_CLUSTER_NAME:-local}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${APP_KAFKA_UI_BOOTSTRAP_SERVERS:-broker:29092}
+
+  prometheus:
+    image: prom/prometheus:v3.7.0
+    container_name: prometheus
+    depends_on:
+      - broker
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "wsl-host:${APP_WSL_HOST_IP:-172.21.119.28}"
+    environment:
+      PROMETHEUS_BASIC_AUTH_USER: ${APP_PROMETHEUS_BASIC_AUTH_USER:-admin}
+      PROMETHEUS_BASIC_AUTH_PASSWORD: ${APP_PROMETHEUS_BASIC_AUTH_PASSWORD:-D0cker!}
+      PROMETHEUS_BASIC_AUTH_HASH: ${APP_PROMETHEUS_BASIC_AUTH_HASH}
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - sed -e "s|__PROMETHEUS_BASIC_AUTH_USER__|$$PROMETHEUS_BASIC_AUTH_USER|g" -e "s|__PROMETHEUS_BASIC_AUTH_PASSWORD__|$$PROMETHEUS_BASIC_AUTH_PASSWORD|g" /etc/prometheus/prometheus.yml.tmpl > /tmp/prometheus.yml && sed -e "s|__PROMETHEUS_BASIC_AUTH_USER__|$$PROMETHEUS_BASIC_AUTH_USER|g" -e "s|__PROMETHEUS_BASIC_AUTH_HASH__|$$PROMETHEUS_BASIC_AUTH_HASH|g" /etc/prometheus/web.yml.tmpl > /tmp/web.yml && exec /bin/prometheus --config.file=/tmp/prometheus.yml --web.config.file=/tmp/web.yml
+    ports:
+      - "${APP_PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml.tmpl:ro
+      - ../monitoring/prometheus-web.yml:/etc/prometheus/web.yml.tmpl:ro
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: grafana
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${APP_GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${APP_GRAFANA_ADMIN_PASSWORD:-D0cker!}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GRAFANA_PROMETHEUS_BASIC_AUTH_USER: ${APP_PROMETHEUS_BASIC_AUTH_USER:-admin}
+      GRAFANA_PROMETHEUS_BASIC_AUTH_PASSWORD: ${APP_PROMETHEUS_BASIC_AUTH_PASSWORD:-D0cker!}
+    ports:
+      - "${APP_GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+  rabbitmq:
+    image: rabbitmq:4-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  kafka_data:
+  grafana_data:
+  mysql_data:

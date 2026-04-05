@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cart - Kafka App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-body-tertiary d-flex flex-column min-vh-100">
+
+<nav th:replace="~{_fragments/navbar :: navbar}"></nav>
+
+<main class="flex-grow-1 py-5" data-cart-page>
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            <div class="col-12 col-xl-10">
+                <section class="card border-0 shadow-sm app-page-header">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-center">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                            <div>
+                                <h1 class="h2 fw-bold mb-2">Shopping Cart</h1>
+                                <p class="text-secondary mb-0">Sepetinize urun ekleyin, miktari guncelleyin ve checkout ile tamamlayin.</p>
+                            </div>
+                            <a href="/products" class="btn btn-outline-secondary">More Products</a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="alert alert-success shadow-sm border-0" th:if="${successMessage}" th:text="${successMessage}"></div>
+                <div class="row g-4">
+                    <div class="col-12 col-lg-8" data-cart-content th:classappend="${#lists.isEmpty(cartItems)} ? ' d-none' : ''">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4 p-lg-5">
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h2 class="h4 fw-bold mb-0">Cart Items</h2>
+                                    <span class="text-secondary small">Miktar degisince otomatik guncellenir.</span>
+                                </div>
+
+                                <div class="d-flex flex-column gap-4">
+                                    <div class="border rounded-4 p-3 p-md-4"
+                                         th:each="item : ${cartItems}"
+                                         th:attr="data-cart-row=${item.product.id},data-cart-unit-price=${item.product.price}">
+                                        <div class="d-flex flex-column flex-md-row gap-3 gap-md-4 align-items-md-start">
+                                            <a th:href="@{/products/{id}(id=${item.product.id})}" class="d-inline-block">
+                                                <img class="rounded-4 border app-cart-item-image"
+                                                     th:src="|https://picsum.photos/seed/cart-${item.product.id}/160/160|"
+                                                     th:alt="${item.product.name}">
+                                            </a>
+
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+                                                    <div>
+                                                        <a class="fw-semibold fs-5 text-decoration-none"
+                                                           th:href="@{/products/{id}(id=${item.product.id})}"
+                                                           th:text="${item.product.name}">Product</a>
+                                                        <div class="text-secondary mt-1" th:text="${item.product.category.name}">Category</div>
+                                                        <div class="small text-secondary mt-2"
+                                                             th:text="${#numbers.formatDecimal(item.product.price, 1, 'COMMA', 2, 'POINT')} + ' EUR / item'">
+                                                            0.00 EUR / item
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="text-md-end">
+                                                        <div class="small text-secondary">Line total</div>
+                                                        <div class="fs-5 fw-bold text-primary" data-cart-line-total th:text="${#numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')} + ' EUR'">0.00 EUR</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-3 mt-4">
+                                                    <form class="d-flex gap-2 align-items-center"
+                                                          th:action="@{/cart/{productId}/quantity(productId=${item.product.id})}"
+                                                          th:attr="data-cart-endpoint=@{/api/cart/{productId}/quantity(productId=${item.product.id})}"
+                                                          method="post"
+                                                          data-cart-update-form>
+                                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                                        <label class="form-label mb-0 small text-secondary" th:for="'quantity-' + ${item.product.id}">Qty</label>
+                                                        <input th:id="'quantity-' + ${item.product.id}"
+                                                               type="number"
+                                                               name="quantity"
+                                                               min="0"
+                                                               class="form-control"
+                                                               style="max-width: 5.5rem;"
+                                                               data-cart-quantity-input
+                                                               th:value="${item.quantity}">
+                                                        <button type="submit" class="btn btn-outline-primary">Update</button>
+                                                    </form>
+
+                                                    <form th:action="@{/cart/{productId}/remove(productId=${item.product.id})}"
+                                                          th:attr="data-cart-endpoint=@{/api/cart/{productId}/remove(productId=${item.product.id})}"
+                                                          method="post"
+                                                          data-cart-remove-form>
+                                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                                        <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-4" data-cart-summary th:classappend="${#lists.isEmpty(cartItems)} ? ' d-none' : ''">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-4 p-lg-5">
+                                <h2 class="h4 fw-bold mb-4">Order Summary</h2>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-secondary">Toplam urun</span>
+                                    <span class="fw-semibold" data-cart-total-quantity th:text="${cartItemCount}">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-secondary">Subtotal</span>
+                                    <span class="fs-4 fw-bold text-primary" data-cart-subtotal th:text="${#numbers.formatDecimal(cartSubtotal, 1, 'COMMA', 2, 'POINT')} + ' EUR'">0.00 EUR</span>
+                                </div>
+                                <p class="small text-secondary mb-4">Shipping ve tax hesaplamasi checkout adiminda tamamlanir.</p>
+
+                                <a th:if="${loggedIn}" href="/checkout" class="btn btn-dark w-100 btn-lg">Checkout</a>
+                                <a th:if="${!loggedIn}" href="/login" class="btn btn-dark w-100 btn-lg">Login for Checkout</a>
+
+                                <p class="small text-secondary mt-3 mb-0" th:if="${loggedIn}">
+                                    Siparis tamamlaninca kayitli e-posta adresinize onay maili gonderilir.
+                                </p>
+                                <p class="small text-secondary mt-3 mb-0" th:if="${!loggedIn}">
+                                    Siparis onayi ve mail almak icin once giris yapin.
+                                </p>
+
+                                <a href="/products" class="btn btn-outline-secondary w-100 mt-4">Continue Shopping</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info shadow-sm border-0" data-cart-empty-state th:classappend="${#lists.isEmpty(cartItems)} ? '' : ' d-none'">
+                    Sepetiniz bos. Urun eklemek icin <a href="/products" class="alert-link">products</a> sayfasina donun.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/cart.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    basicAuth: true
+    basicAuthUser: $GRAFANA_PROMETHEUS_BASIC_AUTH_USER
+    secureJsonData:
+      basicAuthPassword: $GRAFANA_PROMETHEUS_BASIC_AUTH_PASSWORD

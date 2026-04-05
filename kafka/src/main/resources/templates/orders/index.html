@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Orders - Kafka App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-body-tertiary d-flex flex-column min-vh-100">
+
+<nav th:replace="~{_fragments/navbar :: navbar}"></nav>
+
+<main class="flex-grow-1 py-5">
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            <div class="col-12 col-xl-10">
+                <section class="card border-0 shadow-sm app-page-header">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-center">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                            <div>
+                                <h1 class="h2 fw-bold mb-2">My Orders</h1>
+                                <p class="text-secondary mb-0">Verdiginiz siparisleri, iptal edilenleri ve satin alma duzeninizi takip edin.</p>
+                            </div>
+                            <a href="/products" class="btn btn-dark">New Shopping</a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="alert alert-success shadow-sm border-0" th:if="${successMessage}" th:text="${successMessage}"></div>
+                <div class="alert alert-danger shadow-sm border-0" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Toplam siparis</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.totalOrders}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Aktif siparis</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.placedOrders}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Iptal edilen</div>
+                            <div class="display-6 fw-bold text-danger" th:text="${orderSummary.canceledOrders}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Tekrar alisveris</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.repeatCustomers > 0 ? 'Var' : 'Yok'}">Yok</div>
+                        </div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="h4 fw-bold mb-0">Order History</h2>
+                            <span class="small text-secondary">Son siparis en ustte.</span>
+                        </div>
+                        <div class="accordion" id="ordersAccordion">
+                            <div class="accordion-item border rounded-4 mb-3" th:each="order : ${orders}">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed rounded-4" type="button" data-bs-toggle="collapse"
+                                            th:attr="data-bs-target=${'#order-' + order.id},aria-controls=${'order-' + order.id}">
+                                        <span class="d-flex flex-column flex-lg-row justify-content-between w-100 gap-2 me-3">
+                                            <span class="fw-semibold" th:text="${order.orderNumber}">ORD-123</span>
+                                            <span class="text-secondary" th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}">05.04.2026 13:30</span>
+                                            <span th:text="${#numbers.formatDecimal(order.subtotal, 1, 'COMMA', 2, 'POINT')} + ' EUR'">0.00 EUR</span>
+                                            <span class="badge"
+                                                  th:classappend="${order.status == 'CANCELED'} ? ' text-bg-danger' : ' text-bg-success'"
+                                                  th:text="${order.status}">PLACED</span>
+                                        </span>
+                                    </button>
+                                </h2>
+                                <div class="accordion-collapse collapse" th:id="${'order-' + order.id}" data-bs-parent="#ordersAccordion">
+                                    <div class="accordion-body">
+                                        <div class="row g-4">
+                                            <div class="col-12 col-lg-7">
+                                                <h3 class="h6 fw-bold mb-3">Items</h3>
+                                                <div class="border rounded-4 p-3 mb-3" th:each="item : ${order.items}">
+                                                    <div class="d-flex justify-content-between gap-3">
+                                                        <div>
+                                                            <div class="fw-semibold" th:text="${item.productName}">Product</div>
+                                                            <div class="small text-secondary" th:text="|${item.quantity} x ${#numbers.formatDecimal(item.unitPrice, 1, 'COMMA', 2, 'POINT')} EUR|">1 x 0.00 EUR</div>
+                                                        </div>
+                                                        <div class="fw-semibold" th:text="${#numbers.formatDecimal(item.lineTotal, 1, 'COMMA', 2, 'POINT')} + ' EUR'">0.00 EUR</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-lg-5">
+                                                <h3 class="h6 fw-bold mb-3">Details</h3>
+                                                <div class="small text-secondary mb-1">Musteri</div>
+                                                <div class="fw-semibold mb-3" th:text="${order.customerDisplayName()}">Max Mustermann</div>
+                                                <div class="small text-secondary mb-1">Odeme</div>
+                                                <div class="mb-3" th:text="|${order.paymentMethod} / ${order.paymentStatus}|">PAYPAL / APPROVED</div>
+                                                <div class="small text-secondary mb-1">Adres</div>
+                                                <div class="mb-3" th:text="|${order.street} ${order.houseNumber}, ${order.postalCode} ${order.city}|">Address</div>
+                                                <div th:if="${order.status == 'CANCELED'}" class="alert alert-danger border-0">
+                                                    Iptal nedeni: <span th:text="${order.cancelReason ?: 'Belirtilmedi'}">Kullanici talebi</span>
+                                                </div>
+                                                <form th:if="${order.status == 'PLACED'}"
+                                                      th:action="@{/orders/{id}/cancel(id=${order.id})}"
+                                                      method="post">
+                                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                                    <button type="submit" class="btn btn-outline-danger w-100">Siparisi Iptal Et</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center py-5 text-secondary" th:if="${#lists.isEmpty(orders)}">
+                                Henuz siparisiniz yok.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

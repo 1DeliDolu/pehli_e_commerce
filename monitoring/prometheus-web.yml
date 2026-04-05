@@ -1,0 +1,3 @@
+basic_auth_users:
+  __PROMETHEUS_BASIC_AUTH_USER__: __PROMETHEUS_BASIC_AUTH_HASH__
+

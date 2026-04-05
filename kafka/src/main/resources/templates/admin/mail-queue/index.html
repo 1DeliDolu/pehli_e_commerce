@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Mail Queue - Kafka App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-body-tertiary d-flex flex-column min-vh-100">
+
+<nav th:replace="~{_fragments/navbar :: navbar}"></nav>
+
+<main class="flex-grow-1 py-5">
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            <div class="col-12 col-xl-10">
+                <section class="card border-0 shadow-sm app-page-header">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-center">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                            <div>
+                                <h1 class="h2 fw-bold mb-2">Admin Mail Queue</h1>
+                                <p class="text-secondary mb-0">RabbitMQ mail queue ve DLQ durumunu izleyin.</p>
+                            </div>
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <a href="/admin/orders" class="btn btn-outline-dark">Orders</a>
+                                <a href="/admin/products" class="btn btn-outline-dark">Products</a>
+                                <a href="/admin/categories" class="btn btn-outline-dark">Categories</a>
+                                <a href="/admin/topics" class="btn btn-outline-dark">Topics</a>
+                                <form th:action="@{/admin/mail-queue/retry-dlq}" method="post" class="d-flex">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-outline-dark">Retry DLQ</button>
+                                </form>
+                                <a href="http://localhost:15672" target="_blank" rel="noreferrer" class="btn btn-dark">RabbitMQ UI</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12 col-xl-10" th:if="${successMessage}">
+                <div class="alert alert-success shadow-sm border-0" th:text="${successMessage}">
+                    Islem tamamlandi.
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10" th:if="${errorMessage}">
+                <div class="alert alert-danger shadow-sm border-0" th:text="${errorMessage}">
+                    Islem basarisiz.
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10" th:if="${!overview.available}">
+                <div class="alert alert-danger shadow-sm border-0" th:text="${overview.statusMessage}">
+                    RabbitMQ verisi alinamadi.
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10" th:if="${overview.available}">
+                <div class="alert alert-success shadow-sm border-0" th:text="${overview.statusMessage}">
+                    RabbitMQ verisi guncel.
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <section class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <h2 class="h4 fw-bold mb-3">Mail Queue</h2>
+                                <div class="row row-cols-2 g-3">
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">State</div>
+                                            <div class="fw-semibold text-capitalize" th:text="${overview.mailQueue.state}">running</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Consumers</div>
+                                            <div class="fw-semibold" th:text="${overview.mailQueue.consumers}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Ready</div>
+                                            <div class="fw-semibold" th:text="${overview.mailQueue.ready}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Unacked</div>
+                                            <div class="fw-semibold" th:text="${overview.mailQueue.unacked}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Total</div>
+                                            <div class="fw-semibold" th:text="${overview.mailQueue.total}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Incoming/s</div>
+                                            <div class="fw-semibold" th:text="${#numbers.formatDecimal(overview.mailQueue.incomingRate, 1, 'COMMA', 2, 'POINT')}">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <section class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <h2 class="h4 fw-bold mb-3">Retry Queue</h2>
+                                <div class="row row-cols-2 g-3">
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">State</div>
+                                            <div class="fw-semibold text-capitalize" th:text="${overview.retryQueue.state}">running</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Consumers</div>
+                                            <div class="fw-semibold" th:text="${overview.retryQueue.consumers}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Ready</div>
+                                            <div class="fw-semibold" th:text="${overview.retryQueue.ready}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Unacked</div>
+                                            <div class="fw-semibold" th:text="${overview.retryQueue.unacked}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Total</div>
+                                            <div class="fw-semibold" th:text="${overview.retryQueue.total}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Incoming/s</div>
+                                            <div class="fw-semibold" th:text="${#numbers.formatDecimal(overview.retryQueue.incomingRate, 1, 'COMMA', 2, 'POINT')}">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="col-12 col-lg-4">
+                        <section class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <h2 class="h4 fw-bold mb-3">Dead Letter Queue</h2>
+                                <div class="row row-cols-2 g-3">
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">State</div>
+                                            <div class="fw-semibold text-capitalize" th:text="${overview.deadLetterQueue.state}">running</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Consumers</div>
+                                            <div class="fw-semibold" th:text="${overview.deadLetterQueue.consumers}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Ready</div>
+                                            <div class="fw-semibold" th:text="${overview.deadLetterQueue.ready}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Unacked</div>
+                                            <div class="fw-semibold" th:text="${overview.deadLetterQueue.unacked}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Total</div>
+                                            <div class="fw-semibold" th:text="${overview.deadLetterQueue.total}">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="border rounded-3 p-3 bg-light-subtle">
+                                            <div class="small text-secondary">Outgoing/s</div>
+                                            <div class="fw-semibold" th:text="${#numbers.formatDecimal(overview.deadLetterQueue.outgoingRate, 1, 'COMMA', 2, 'POINT')}">0.00</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <section class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="h4 fw-bold mb-0">DLQ Son Mesajlar</h2>
+                            <span class="small text-secondary">Son 10 mesaj goruntulenir, retry ise en fazla 50 mesaj icin calisir.</span>
+                        </div>
+
+                        <div class="alert alert-info border-0 mb-0" th:if="${#lists.isEmpty(overview.deadLetterMessages)}">
+                            DLQ tarafinda gosterilecek mesaj yok.
+                        </div>
+
+                        <div class="table-responsive" th:if="${!#lists.isEmpty(overview.deadLetterMessages)}">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Exchange</th>
+                                    <th>Routing Key</th>
+                                    <th>Redelivered</th>
+                                    <th>Payload</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="message : ${overview.deadLetterMessages}">
+                                    <td th:text="${message.exchange}">mail.dlx</td>
+                                    <td th:text="${message.routingKey}">mail.send.dlq</td>
+                                    <td th:text="${message.redelivered ? 'Yes' : 'No'}">No</td>
+                                    <td>
+                                        <pre class="mb-0 small text-wrap" th:text="${message.payload}">payload</pre>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

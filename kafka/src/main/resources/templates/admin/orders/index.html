@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Orders - Kafka App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="bg-body-tertiary d-flex flex-column min-vh-100">
+
+<nav th:replace="~{_fragments/navbar :: navbar}"></nav>
+
+<main class="flex-grow-1 py-5">
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            <div class="col-12 col-xl-10">
+                <section class="card border-0 shadow-sm app-page-header">
+                    <div class="card-body p-4 p-lg-5 d-flex flex-column justify-content-center">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                            <div>
+                                <h1 class="h2 fw-bold mb-2">Admin Orders</h1>
+                                <p class="text-secondary mb-0">Musteri hangi siparisi iptal etti, ne siklikla aliyor ve son siparis durumu gibi metrikleri izleyin.</p>
+                            </div>
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <a href="/admin/products" class="btn btn-outline-dark">Products</a>
+                                <a href="/admin/categories" class="btn btn-outline-dark">Categories</a>
+                                <a href="/admin/topics" class="btn btn-outline-dark">Topics</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Toplam siparis</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.totalOrders}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Active Orders</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.placedOrders}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-2">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Canceled Orders</div>
+                            <div class="display-6 fw-bold text-danger" th:text="${orderSummary.canceledOrders}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Distinct Customers</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.distinctCustomers}">0</div>
+                        </div></div>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+                            <div class="small text-secondary">Repeat Customers</div>
+                            <div class="display-6 fw-bold" th:text="${orderSummary.repeatCustomers}">0</div>
+                        </div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h4 fw-bold mb-3">Customer Analytics</h2>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Email</th>
+                                    <th>Total Orders</th>
+                                    <th>Canceled Orders</th>
+                                    <th>Last Canceled Order</th>
+                                    <th>Purchase Frequency</th>
+                                    <th>Last Order</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="metric : ${customerAnalytics}">
+                                    <td class="fw-semibold" th:text="${metric.customerName}">Customer</td>
+                                    <td th:text="${metric.customerEmail}">mail@example.com</td>
+                                    <td th:text="${metric.totalOrders}">0</td>
+                                    <td th:text="${metric.canceledOrders}">0</td>
+                                    <td th:text="${metric.lastCanceledOrderNumber ?: '-'}">ORD-...</td>
+                                    <td th:text="${metric.purchaseFrequencyLabel()}">First order</td>
+                                    <td th:text="${metric.lastOrderAt != null ? #temporals.format(metric.lastOrderAt, 'dd.MM.yyyy HH:mm') : '-'}">-</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(customerAnalytics)}">
+                                    <td colspan="7" class="text-center py-4 text-secondary">No order data available .</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-10">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h4 fw-bold mb-3">Orders</h2>
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Musteri</th>
+                                    <th>Odeme</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th>Iptal nedeni</th>
+                                    <th>Tarih</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="order : ${orders}">
+                                    <td class="fw-semibold" th:text="${order.orderNumber}">ORD-123</td>
+                                    <td>
+                                        <div class="fw-semibold" th:text="${order.customerDisplayName()}">Customer</div>
+                                        <div class="small text-secondary" th:text="${order.customerEmail}">mail@example.com</div>
+                                    </td>
+                                    <td>
+                                        <div th:text="${order.paymentMethod}">PAYPAL</div>
+                                        <div class="small text-secondary" th:text="${order.paymentStatus}">APPROVED</div>
+                                    </td>
+                                    <td th:text="${#numbers.formatDecimal(order.subtotal, 1, 'COMMA', 2, 'POINT')} + ' EUR'">0.00 EUR</td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${order.status == 'CANCELED'} ? ' text-bg-danger' : ' text-bg-success'"
+                                              th:text="${order.status}">PLACED</span>
+                                    </td>
+                                    <td th:text="${order.cancelReason ?: '-'}">-</td>
+                                    <td th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}">05.04.2026 13:00</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(orders)}">
+                                    <td colspan="7" class="text-center py-4 text-secondary">Henuz siparis yok.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
