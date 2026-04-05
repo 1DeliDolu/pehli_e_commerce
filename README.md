@@ -11,7 +11,7 @@
 ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Local%20Stack-2496ed)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088ff)
 
-This is a Spring Boot based e-commerce demo application. The project runs with MySQL, Kafka, RabbitMQ, MailHog, Prometheus, and Grafana, and focuses on monitoring both application and broker metrics.
+This is a Spring Boot based e-commerce demo application. It was built as a beginner-level hands-on practice project while learning Kafka. The project runs with MySQL, Kafka, RabbitMQ, MailHog, Prometheus, and Grafana, and focuses on monitoring both application and broker metrics.
 
 ## Contents
 
