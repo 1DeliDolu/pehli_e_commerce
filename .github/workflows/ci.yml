@@ -1,14 +1,19 @@
-name: Test
+name: CI
 
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -26,5 +31,5 @@ jobs:
       - name: Make Maven wrapper executable
         run: chmod +x kafka/mvnw
 
-      - name: Run tests
+      - name: Run build verification
         run: ./kafka/mvnw -B -f kafka/pom.xml test
