@@ -1,5 +1,16 @@
 # Pehli E-Commerce Kafka Demo
 
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-f28c28)](LICENSE)
+![Java](https://img.shields.io/badge/Java-21%2F25-2ea44f)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.x-6db33f)
+![Kafka](https://img.shields.io/badge/Kafka-Event%20Streaming-231f20)
+![MySQL](https://img.shields.io/badge/MySQL-8.4-4479a1)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4.x-ff6600)
+![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-e6522c)
+![Grafana](https://img.shields.io/badge/Grafana-Dashboards-f46800)
+![Docker Compose](https://img.shields.io/badge/Docker%20Compose-Local%20Stack-2496ed)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088ff)
+
 Spring Boot tabanli bir e-commerce demo uygulamasi. Proje; MySQL, Kafka, RabbitMQ, MailHog, Prometheus ve Grafana ile birlikte calisiyor ve hem uygulama hem broker metriklerini izlemeyi hedefliyor.
 
 ## Icerik
