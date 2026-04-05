@@ -1,0 +1,31 @@
+name: Update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 1 * *"
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Make Maven wrapper executable
+        run: chmod +x kafka/mvnw
+
+      - name: Run monthly verification
+        run: ./kafka/mvnw -B -f kafka/pom.xml test
