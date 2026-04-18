@@ -1,4 +1,4 @@
-FROM apache/kafka:4.2.0
+FROM apache/kafka:latest
 
 ARG JMX_EXPORTER_VERSION=1.0.1
 
